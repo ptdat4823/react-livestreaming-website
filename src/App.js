@@ -14,6 +14,20 @@ import ReactPlayer from "react-player";
 import screenfull from "screenfull";
 import { cn, formatTime } from "./utils/func";
 
+const playbackRates = {
+  "1x": 1,
+  "1.5x": 1.5,
+  "2x": 2,
+  "2.5x": 2.5,
+};
+
+const resolutions = {
+  "360p": 360,
+  "480p": 480,
+  "720p": 720,
+  "1080p": 1080,
+};
+
 function App() {
   const ref = useRef(null);
   const [count, setCount] = useState(0); // for hide control bar
@@ -23,6 +37,7 @@ function App() {
   const [loaded, setLoaded] = useState(0);
   const [config, setConfig] = useState({
     playbackRate: 1.0,
+    resolution: 720,
     volumeValue: 100,
     isFullscreen: false,
     loop: false,
@@ -48,6 +63,7 @@ function App() {
     onFullScreen: () => onFullScreen(),
     onExitFullScreen: () => onExitFullScreen(),
     handlePlaybackRateChange: (value) => handlePlaybackRateChange(value),
+    handleResolutionChange: (value) => handleResolutionChange(value),
   });
 
   const handleVolumeChange = (value) => {
@@ -83,19 +99,25 @@ function App() {
   };
 
   const handlePlaybackRateChange = (value) => {
-    console.log("playback rate change to", value);
     setConfig({ ...config, playbackRate: value });
+  };
+
+  const handleResolutionChange = (value) => {
+    setConfig({ ...config, resolution: value });
   };
 
   return (
     <div className="w-screen h-screen relative flex flex-col items-center">
-      <div className="font-sans w-full h-14 bg-purple-500 flex items-center px-4">
+      <div className="font-sans w-full h-14 bg-purple-500 flex items-center px-4 z-50">
         <h6 className="text-white font-bold">Livestreaming website</h6>
       </div>
       <div
-        className="w-[1080px] relative"
+        className="w-[1024px] q relative"
         id="frame"
         onMouseMove={() => {
+          setCount(0);
+        }}
+        onClick={() => {
           setCount(0);
         }}
       >
@@ -115,10 +137,6 @@ function App() {
             setLoaded(state.loaded);
             setCurrentTime(state.playedSeconds);
           }}
-          onSeek={(time) => {
-            // if (!playControl.isPlaying)
-            //   setPlayControl({ ...playControl, isPlaying: true });
-          }}
           onDuration={(duration) => {
             setDuration(duration);
           }}
@@ -131,7 +149,7 @@ function App() {
           fnControl={fnControl}
           duration={duration}
           videoInfo={videoInfo}
-          className={count > 3 ? "hidden" : "visible"}
+          className={count > 3 ? "opacity-0" : "opacity-100"}
         />
       </div>
     </div>
@@ -155,8 +173,8 @@ function FrontOfVideo({
         className
       )}
     >
-      <div className="absolute top-2 left-4 text-white font-bold font-sans">
-        {videoInfo.streamer.name}
+      <div className="absolute top-4 left-8 text-white font-bold font-sans">
+        {videoInfo.videoTitle}
       </div>
       <div
         className="h-full w-full flex items-center justify-center"
@@ -298,10 +316,20 @@ function VideoControlButtons({
       </div>
 
       <div className="flex flex-row items-center gap-4">
-        <RateCombobox
-          options={[1, 1.5, 2, 2.5]}
-          value={config.playbackRate}
-          onChange={fnControl.handlePlaybackRateChange}
+        <Combobox
+          options={Object.keys(playbackRates)}
+          value={config.playbackRate + "x"}
+          onChange={(value) =>
+            fnControl.handlePlaybackRateChange(playbackRates[value])
+          }
+        />
+
+        <Combobox
+          options={Object.keys(resolutions)}
+          value={config.resolution + "p"}
+          onChange={(value) =>
+            fnControl.handleResolutionChange(resolutions[value])
+          }
         />
 
         <div
@@ -367,7 +395,7 @@ function VolumeButton({ onVolumeChange }) {
   );
 }
 
-const RateCombobox = ({ options, value, onChange }) => {
+const Combobox = ({ options, value, onChange }) => {
   const [showOptions, setShowOptions] = useState(false);
   const handleValueChange = (value) => {
     if (onChange) onChange(value);
@@ -380,7 +408,7 @@ const RateCombobox = ({ options, value, onChange }) => {
         className={cn("text-white cursor-pointer")}
         onClick={() => setShowOptions(!showOptions)}
       >
-        {value + "x"}
+        {value}
       </div>
       {showOptions && (
         <div className="absolute bottom-full w-fit h-fit px-1 py-1 bg-black/70 flex flex-col items-center rounded-md">
@@ -396,7 +424,7 @@ const RateCombobox = ({ options, value, onChange }) => {
               <span className="w-[20px]">
                 {value === option ? <Check /> : null}
               </span>
-              <p className="w-[70px]">{option + "x"}</p>
+              <p className="w-[70px]">{option}</p>
             </div>
           ))}
         </div>
